@@ -3233,9 +3233,13 @@ function NIT:createTradeCopyFormatButtons()
 		NIT.copyTradeRecordsSlider:SetWidth(224);
 		NIT.copyTradeRecordsSlider:SetHeight(16);
 		NIT.copyTradeRecordsSlider:SetMinMaxValues(1, 100);
-	    NIT.copyTradeRecordsSlider:SetObeyStepOnDrag(true);
+		if (NIT.copyTradeRecordsSlider.SetObeyStepOnDrag) then
+			NIT.copyTradeRecordsSlider:SetObeyStepOnDrag(true);
+		end
 	    NIT.copyTradeRecordsSlider:SetValueStep(1);
-	    NIT.copyTradeRecordsSlider:SetStepsPerPage(1);
+		if (NIT.copyTradeRecordsSlider.SetStepsPerPage) then
+			NIT.copyTradeRecordsSlider:SetStepsPerPage(1);
+		end
 		NIT.copyTradeRecordsSlider:SetValue(NIT.db.global.copyTradeRecords);
 	    NITCopyTradeRecordsSliderLow:SetText("1");
 	    NITCopyTradeRecordsSliderHigh:SetText("100");
@@ -3559,9 +3563,13 @@ function NIT:createAltsFrameSlider()
 		NIT.charsMinLevelSlider:SetWidth(120);
 		NIT.charsMinLevelSlider:SetHeight(12);
 		NIT.charsMinLevelSlider:SetMinMaxValues(1, NIT.maxLevel);
-	    NIT.charsMinLevelSlider:SetObeyStepOnDrag(true);
+		if (NIT.charsMinLevelSlider.SetObeyStepOnDrag) then
+			NIT.charsMinLevelSlider:SetObeyStepOnDrag(true);
+		end
 	    NIT.charsMinLevelSlider:SetValueStep(1);
-	    NIT.charsMinLevelSlider:SetStepsPerPage(1);
+		if (NIT.charsMinLevelSlider.SetStepsPerPage) then
+			NIT.charsMinLevelSlider:SetStepsPerPage(1);
+		end
 		NIT.charsMinLevelSlider:SetValue(NIT.db.global.charsMinLevel);
 		NITCharsMinLevelSliderLow:SetText("1");
 		NITCharsMinLevelSliderHigh:SetText(NIT.maxLevel);

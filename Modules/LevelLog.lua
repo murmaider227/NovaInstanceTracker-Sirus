@@ -224,16 +224,57 @@ local xpStrings = {
 	["COMBATLOG_XPGAIN_FIRSTPERSON_UNNAMED_RAID"] = true,
 };
 
+local xpPatternMagic = {
+	["^"] = true, ["$"] = true, ["("] = true, [")"] = true,
+	["%"] = true, ["."] = true, ["["] = true, ["]"] = true,
+	["*"] = true, ["+"] = true, ["-"] = true, ["?"] = true,
+};
+
+--Convert localized printf strings to anchored Lua patterns without captures.
+--Some clients use positional tokens such as %1$s and %2$d; passing those
+--directly to strmatch causes "invalid capture index".
+local function xpFormatToPattern(formatString)
+	if (type(formatString) ~= "string") then
+		return;
+	end
+	local result = {"^"};
+	local i = 1;
+	while (i <= #formatString) do
+		local char = string.sub(formatString, i, i);
+		if (char == "%") then
+			local remaining = string.sub(formatString, i);
+			local token, tokenType = string.match(remaining, "^(%%%d+%$([sd]))");
+			if (not token) then
+				token, tokenType = string.match(remaining, "^(%%([sd]))");
+			end
+			if (token) then
+				result[#result + 1] = tokenType == "d" and "%d+" or ".+";
+				i = i + #token;
+			elseif (string.sub(remaining, 1, 2) == "%%") then
+				result[#result + 1] = "%%";
+				i = i + 2;
+			else
+				result[#result + 1] = "%%";
+				i = i + 1;
+			end
+		else
+			result[#result + 1] = xpPatternMagic[char] and ("%" .. char) or char;
+			i = i + 1;
+		end
+	end
+	result[#result + 1] = "$";
+	return table.concat(result);
+end
+
 --Only mobs that gave xp.
 function NIT:addLevelLogMobCount(text)
-	if (LOCALE_koKR) then
-		--LevelLog.lua:230: invalid capture index
-		--Disabled in kr until I work out what the issue is.
+	if (type(text) ~= "string") then
 		return;
 	end
 	local found;
-	for k, v in pairs(xpStrings) do
-		if (strmatch(text, string.gsub(string.gsub(_G[k], "%%s", "(.+)"), "%%d", "(%%d+)"))) then
+	for k in pairs(xpStrings) do
+		local pattern = xpFormatToPattern(_G[k]);
+		if (pattern and strmatch(text, pattern)) then
 			found = true
 			break;
 		end

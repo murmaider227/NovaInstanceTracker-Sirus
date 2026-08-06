@@ -1,8 +1,10 @@
 ## Interface: 30300
-## Notes: Instance lockout tracking with mob count/xp/gold/trade logs, battleground/arena logs, and much more.
-## Title: Nova Instance Tracker
-## Author: Novaspark-Arugal OCE
-## Version: 1.55
+## Notes: Трекер подземелий, опыта, мобов и золота, адаптированный для сервера Sirus.
+## Title: Nova Instance Tracker (Sirus)
+## Author: murmaider227
+## X-Original-Author: Novaspark-Arugal OCE
+## X-Website: https://github.com/murmaider227/NovaInstanceTracker-Sirus
+## Version: 1.55-sirus.1
 ## SavedVariables: NITdatabase
 
 embeds.xml

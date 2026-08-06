@@ -998,7 +998,8 @@ function NIT:updateMinimapButton(tooltip, frame)
 		local data = NIT.data.instances[1];
 		if (data) then
 			--tooltip:AddLine("|cFF9CD6DECurrently Inside:");
-			local timeInside = NIT:getTimeString(GetServerTime() - data.enteredTime, true);
+			local timeInsideRaw = NIT:getInstanceDuration(data, true);
+			local timeInside = NIT:getTimeString(timeInsideRaw, true);
 			if (data.isPvp) then
 				tooltip:AddLine("|cFFFFA500" .. data.instanceName);
 			else
@@ -1006,12 +1007,7 @@ function NIT:updateMinimapButton(tooltip, frame)
 			end
 			tooltip:AddLine("|cFF9CD6DE" .. timeInside);		
 			if (not data.isPvp) then
-				local mobCount = 0;
-				if (data.mobCount and data.mobCount > 0) then
-					mobCount = data.mobCount;
-				elseif (data.mobCountFromKill and data.mobCountFromKill > 0) then
-					mobCount = data.mobCountFromKill;
-				end
+				local mobCount = NIT:getMobCount(data);
 				tooltip:AddLine("|cFF9CD6DE" .. L["mobCount"] .. ":|r |cFFFFFFFF" .. (mobCount or "Unknown"));
 			end
 			if (data.honor) then
@@ -1020,14 +1016,11 @@ function NIT:updateMinimapButton(tooltip, frame)
 			if (UnitLevel("player") ~= NIT.maxLevel and data.type ~= "arena") then
 				tooltip:AddLine("|cFF9CD6DE" .. L["experience"] .. ":|r |cFFFFFFFF" .. (NIT:commaValue(data.xpFromChat) or "Unknown"));
 				if (data.xpFromChat and data.xpFromChat > 0) then
-					local timeSpentRaw = 0;
-					if (data.enteredTime and data.leftTime and data.enteredTime > 0 and data.leftTime > 0) then
-						timeSpentRaw = data.leftTime - data.enteredTime;
-					elseif (data.enteredTime and data.leftTime and data.enteredTime > 0 and (GetServerTime() - data.enteredTime) < 21600) then
-						timeSpentRaw = GetServerTime() - data.enteredTime;
+					local timeSpentRaw = timeInsideRaw;
+					if (timeSpentRaw > 0) then
+						local xpPerHour = NIT:commaValue(NIT:round((tonumber(data.xpFromChat) / timeSpentRaw) * 3600));
+						tooltip:AddLine("|cFF9CD6DE" .. L["experiencePerHour"] .. ":|r |cFFFFFFFF" .. xpPerHour);
 					end
-					local xpPerHour = NIT:commaValue(NIT:round((tonumber(data.xpFromChat) / timeSpentRaw) * 3600));
-					tooltip:AddLine("|cFF9CD6DE" .. L["experiencePerHour"] .. ":|r |cFFFFFFFF" .. xpPerHour);
 				end
 			end
 			if (not data.isPvp) then
@@ -1183,15 +1176,7 @@ function NIT:getMinimapButtonNextExpires(char)
 			noLockout = true;
 		end
 		if (not v.isPvp and not noLockout and (not NIT.perCharOnly or char == v.playerName)) then
-			if (v.leftTime and v.leftTime > (GetServerTime() - 3600)) then
-				local time = 3600 - (GetServerTime() - v.leftTime);
-				--msg = msg .. "\n|cFF9CD6DE" .. v.instanceName .. " expires in " .. NIT:getTimeString(time, true);
-				--msg = "\n|cFF9CD6DE" .. v.instanceName .. " expires in " .. NIT:getTimeString(time, true, NIT.db.global.timeStringType) .. msg;
-				local timeAgo = GetServerTime() - v.leftTime;
-				local lockoutTime = NIT:getTimeString(3600 - timeAgo, true, NIT.db.global.timeStringType)
-				msg = msg .. "\n|cFF9CD6DE" .. v.instanceName .. " (" .. lockoutTime .. " " .. L["leftOnLockout"] .. ")|r";
-				found = true;
-			elseif (v.enteredTime and v.enteredTime > (GetServerTime() - 3600)) then
+			if (v.enteredTime and v.enteredTime > (GetServerTime() - 3600)) then
 				local time = 3600 - (GetServerTime() - v.enteredTime);
 				--msg = msg .. "\n|cFF9CD6DE" .. v.instanceName .. " expires in " .. NIT:getTimeString(time, true);
 				--msg = "\n|cFF9CD6DE" .. v.instanceName .. " expires in " .. NIT:getTimeString(time, true, NIT.db.global.timeStringType) .. msg;
@@ -2121,6 +2106,7 @@ function NIT:buildInstanceLineFrameString(v, count)
 	end
 	local time = NIT:getTimeFormat(v.enteredTime, true, true);
 	local timeAgo = GetServerTime() - v.enteredTime;
+	local lockoutAge = timeAgo;
 	local enteredType = "entered";
 	if (v.leftTime and v.leftTime > 0) then
 		--If valid left time use that instead.
@@ -2150,11 +2136,11 @@ function NIT:buildInstanceLineFrameString(v, count)
 				lockoutTimeString = instance .. " (" .. L["entered"] .. " " .. NIT:getTimeString(timeAgo, true, NIT.db.global.timeStringType) .. " " .. L["ago"] .. ")";
 			end
 		end
-		if (timeAgo < 3600) then
+		if (lockoutAge < 3600) then
 			if (NIT.isRetail) then
-				lockoutTime = NIT:getTimeString(3600 - timeAgo, true, "short");
+				lockoutTime = NIT:getTimeString(3600 - lockoutAge, true, "short");
 			else
-				lockoutTime = NIT:getTimeString(3600 - timeAgo, true, NIT.db.global.timeStringType);
+				lockoutTime = NIT:getTimeString(3600 - lockoutAge, true, NIT.db.global.timeStringType);
 			end
 			if (not NIT.perCharOnly or nameMatch == v.playerName) then
 				timeColor = "|cFF00C800";
@@ -2164,11 +2150,11 @@ function NIT:buildInstanceLineFrameString(v, count)
 					lockoutTimeString = instance .. " (" .. lockoutTime .. " " .. L["leftOnLockout"] .. ")";
 				end
 			end
-		elseif (timeAgo < 86400) then
+		elseif (lockoutAge < 86400) then
 			if (NIT.isRetail) then
-				lockoutTime = NIT:getTimeString(86400 - timeAgo, true, "short");
+				lockoutTime = NIT:getTimeString(86400 - lockoutAge, true, "short");
 			else
-				lockoutTime = NIT:getTimeString(86400 - timeAgo, true, NIT.db.global.timeStringType);
+				lockoutTime = NIT:getTimeString(86400 - lockoutAge, true, NIT.db.global.timeStringType);
 			end
 			if (not NIT.perCharOnly or nameMatch == v.playerName) then
 				timeColor = "|cFFDEDE42";
@@ -2279,27 +2265,17 @@ end
 function NIT:recalcInstanceLineFramesTooltip(obj)
 	local data = NIT.data.instances[obj.id];
 	if (data) then
-		local timeSpent = L["unknown"];
-		local timeSpentRaw = 0;
-		if (data.enteredTime and data.leftTime and data.enteredTime > 0 and data.leftTime > 0) then
-			timeSpent = NIT:getTimeString(data.leftTime - data.enteredTime, true);
-			timeSpentRaw = data.leftTime - data.enteredTime;
-		elseif (data.enteredTime and data.leftTime and data.enteredTime > 0 and (GetServerTime() - data.enteredTime) < 21600) then
-			timeSpent = NIT:getTimeString(GetServerTime() - data.enteredTime, true);
-			timeSpentRaw = GetServerTime() - data.enteredTime;
-		end
+		local isActive = obj.id == 1 and NIT.inInstance;
+		local timeSpentRaw = NIT:getInstanceDuration(data, isActive);
+		local timeSpent = NIT:getTimeString(timeSpentRaw, true);
 		local averageXP = L["unknown"];
-		local mobCount = 0;
+		local mobCount = NIT:getMobCount(data);
 		--Check both count from xp and count from combat log event.
 		--So it works for boosters that mobs are grey and people out of range of combat event but still get xp.
-		if (data.mobCount and data.mobCount > 0) then
-			mobCount = data.mobCount;
-		elseif (data.mobCountFromKill and data.mobCountFromKill > 0) then
-			mobCount = data.mobCountFromKill;
-		end
 		--if (data.xpFromChat and data.mobCount and data.enteredTime > 0 and data.mobCount > 0) then
-		if (data.xpFromChat and data.enteredTime > 0 and mobCount > 0) then
-			averageXP = data.xpFromChat / mobCount;
+		local xpMobCount = tonumber(data.mobCount) or 0;
+		if (data.xpFromChat and data.enteredTime > 0 and xpMobCount > 0) then
+			averageXP = data.xpFromChat / xpMobCount;
 		end
 		local timeLastInside = GetServerTime() - data.enteredTime;
 		if (data.leftTime and data.leftTime > 0) then

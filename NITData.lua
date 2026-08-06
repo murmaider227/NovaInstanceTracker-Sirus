@@ -1088,6 +1088,26 @@ end
 local isGhost = false;
 NIT.lastInstanceName = "(Unknown Instance)";
 local doneFirstGUIDCheck;
+
+function NIT:closeInstanceRecord(data, showStats)
+	if (not data or (tonumber(data.leftTime) or 0) > 0) then
+		return false;
+	end
+	local isPvp = data.isPvp;
+	data.leftTime = GetServerTime();
+	if (not isPvp) then
+		data.leftLevel = UnitLevel("player");
+		data.leftXP = UnitXP("player");
+		data.leftMoney = GetMoney();
+	end
+	--Don't show party stats if bg or arena, only self.
+	if (showStats and (not isPvp or NIT.db.global.instanceStatsOutputWhere == "self")) then
+		NIT:showInstanceStats();
+	end
+	NIT:pushInstanceLeft(data.instanceName, data.instanceID);
+	return true;
+end
+
 function NIT:enteredInstance(isReload, isLogon, checkAgain)
 	doGUID = true;
 	local createdInstance;
@@ -1143,8 +1163,16 @@ function NIT:enteredInstance(isReload, isLogon, checkAgain)
 			if (not isReload) then
 				local previous = NIT.data.instances[1];
 				local previousLeft = previous and previous.leftTime or 0;
-				local sameID = instanceID and previous and previous.instanceID == instanceID;
-				local sameLegacyInstance = not instanceID and previous and not previous.instanceID
+				--Sirus can briefly return 0 or reuse an instanceID while moving between dungeons.
+				--Only treat it as the same run when both the valid ID and dungeon name match.
+				local numericInstanceID = tonumber(instanceID);
+				local previousNumericInstanceID = previous and tonumber(previous.instanceID);
+				local hasValidInstanceID = numericInstanceID and numericInstanceID > 0;
+				local previousHasValidInstanceID = previousNumericInstanceID and previousNumericInstanceID > 0;
+				local sameID = hasValidInstanceID and previousHasValidInstanceID
+						and previousNumericInstanceID == numericInstanceID
+						and previous.instanceName == instanceName;
+				local sameLegacyInstance = not hasValidInstanceID and previous and not previousHasValidInstanceID
 						and previous.instanceName == instanceName and previousLeft > 0
 						and (GetServerTime() - previousLeft) <= 1800;
 				local resetTime = previous and previous.resetTime or 0;
@@ -1162,7 +1190,14 @@ function NIT:enteredInstance(isReload, isLogon, checkAgain)
 					local countMsg = "(" .. NIT.prefixColor .. hourCount .. "|r" .. NIT.mergeColor .. " " .. L["thisHour"] .. ")";
 					NIT:print(NIT.mergeColor .. string.format(L["sameInstance"], countMsg));
 				else
-				local class, classEnglish = UnitClass("player");
+					--Sirus can move the player directly from one dungeon into another without
+					--reporting an intermediate world state. Always finish an open previous run
+					--before inserting the new one, even if the name-based check above was missed.
+					if (previous and (tonumber(previous.leftTime) or 0) == 0) then
+						NIT:closeInstanceRecord(previous, true);
+						NIT.inInstance = nil;
+					end
+					local class, classEnglish = UnitClass("player");
 				local t = {
 					playerName = UnitName("player"),
 					class = class,
@@ -1300,19 +1335,8 @@ end
 
 function NIT:leftInstance()
 	if (NIT.inInstance and NIT.data.instances[1]) then
-		local isPvp = NIT.data.instances[1].isPvp
-		NIT.data.instances[1]["leftTime"] = GetServerTime();
-		if (not isPvp) then
-			NIT.data.instances[1]["leftLevel"] = UnitLevel("player");
-			NIT.data.instances[1]["leftXP"] = UnitXP("player");
-			NIT.data.instances[1]["leftMoney"] = GetMoney();
-		end
 		--NIT:debug("left", UnitLevel("player"));
-		--Don't show party stats if bg or arena, only self.
-		if (not isPvp or NIT.db.global.instanceStatsOutputWhere == "self") then
-			NIT:showInstanceStats();
-		end
-		NIT:pushInstanceLeft(NIT.data.instances[1].instanceName, NIT.data.instances[1].instanceID);
+		NIT:closeInstanceRecord(NIT.data.instances[1], true);
 	end
 	C_Timer.After(5, function()
 		NIT:recordKeystoneData();

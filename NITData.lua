@@ -538,6 +538,33 @@ f:SetScript('OnEvent', function(self, event, ...)
 	end
 end)
 
+--Keep instance tracking alive even when Sirus or another addon breaks C_Timer.
+--PLAYER_ENTERING_WORLD remains the primary detector (it also catches a new copy
+--of a dungeon with the same name); this polling fallback covers missed events,
+--direct transitions between differently named instances and missed exits.
+local instanceWatchElapsed = 0;
+f:SetScript("OnUpdate", function(self, elapsed)
+	instanceWatchElapsed = instanceWatchElapsed + (tonumber(elapsed) or 0);
+	if (instanceWatchElapsed < 0.5) then
+		return;
+	end
+	instanceWatchElapsed = 0;
+	if (not NIT.data or not NIT.data.instances or not NIT.db or not NIT.db.global) then
+		return;
+	end
+	local isInstance, instanceType = IsInInstance();
+	local trackable = isInstance and (instanceType == "party" or instanceType == "raid"
+			or instanceType == "pvp" or instanceType == "arena");
+	if (trackable) then
+		local instanceName = GetInstanceInfo();
+		if (not NIT.inInstance or (instanceName and NIT.lastInstanceName ~= instanceName)) then
+			NIT:enteredInstance();
+		end
+	elseif (NIT.inInstance) then
+		NIT:leftInstance();
+	end
+end)
+
 --Trim records to maxRecordsKept, can set records shown to max 500 in options, 100 is default.
 function NIT:trimDatabase()
 	local max = NIT.db.global.maxRecordsKept;
@@ -812,19 +839,11 @@ function NIT:playerEnteringWorld(...)
 	local isInstance, instanceType = IsInInstance();
 	if (isInstance) then
 		if (isReload) then
-			C_Timer.After(0.5, function()
-				NIT:enteredInstance(true);
-			end)
+			NIT:enteredInstance(true);
 		elseif (isLogon) then
-			C_Timer.After(0.5, function()
-				NIT:enteredInstance(nil, true);
-			end)
+			NIT:enteredInstance(nil, true);
 		else
-			C_Timer.After(0.5, function()
-				if (isInstance) then
-					NIT:enteredInstance();
-				end
-			end)
+			NIT:enteredInstance();
 		end
 	elseif (NIT.inInstance and not isReload) then
 		NIT:leftInstance();
@@ -1356,9 +1375,10 @@ function NIT:enteredInstance(isReload, isLogon, checkAgain)
 					NIT:print(string.format(L["reloadDungeon"], countMsg));
 				end)
 			end
-			C_Timer.After(0.5, function()
-				NIT.inInstance = GetServerTime();
-			end)
+			--This state is critical for recording kills, XP and the eventual exit.
+			--Do not defer it through C_Timer: the Sirus timer queue can be unavailable
+			--or corrupted by another addon while PLAYER_ENTERING_WORLD is processed.
+			NIT.inInstance = GetServerTime();
 			--NIT.lastInstanceID = #NIT.data.instances + 1;
 			--NIT.data.instances[NIT.lastInstanceID] = t;
 			isGhost = false;

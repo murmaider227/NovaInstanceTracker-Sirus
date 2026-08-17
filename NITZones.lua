@@ -442,7 +442,7 @@ if (NIT.expansionNum > 3) then
 		expansion = "cata",
 	};
 	NIT.zones[645] = {
-		name = L[" Blackrock Caverns"],
+		name = L["Blackrock Caverns"],
 		type = "dungeon",
 		expansion = "cata",
 	};

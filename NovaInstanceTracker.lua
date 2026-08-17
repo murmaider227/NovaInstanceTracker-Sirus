@@ -178,10 +178,10 @@ function NIT:print(msg, channel, prefix, nonClickable, tradeLog)
 		--Send to numbered channel by number.
 		local id, name = GetChannelName(channel);
 		if (id == 0) then
-			print(NIT.chatColor .. "No channel with id " .. NIT.prefixColor .. channel .. NIT.chatColor .. " exists.");
-			print(NIT.chatColor .. "Type \"/nit\" to show your instance history.");
-			print(NIT.chatColor .. "Type \"/nit config\" to open options.");
-			print(NIT.chatColor .. "Type \"/nit channelname\" to post your current lockouts to a channel.");
+			print(NIT.chatColor .. string.format(L["noChannelId"], NIT.prefixColor .. channel .. NIT.chatColor));
+			print(NIT.chatColor .. L["slashHelpHistory"]);
+			print(NIT.chatColor .. L["slashHelpOptions"]);
+			print(NIT.chatColor .. L["slashHelpChannel"]);
 			return;
 		end
 		SendChatMessage(printPrefix .. " " .. NIT:stripColors(msg), "CHANNEL", nil, id);
@@ -189,10 +189,10 @@ function NIT:print(msg, channel, prefix, nonClickable, tradeLog)
 		--Send to numbered channel by name.
 		local id, name = GetChannelName(channel);
 		if (id == 0) then
-			print(NIT.chatColor .. "No channel with id or name " .. NIT.prefixColor .. channel .. NIT.chatColor .. " exists.");
-			print(NIT.chatColor .. "Type \"/nit\" to show your instance history.");
-			print(NIT.chatColor .. "Type \"/nit config\" to open options.");
-			print(NIT.chatColor .. "Type \"/nit channelname\" to post your current lockouts to a channel.");
+			print(NIT.chatColor .. string.format(L["noChannelIdOrName"], NIT.prefixColor .. channel .. NIT.chatColor));
+			print(NIT.chatColor .. L["slashHelpHistory"]);
+			print(NIT.chatColor .. L["slashHelpOptions"]);
+			print(NIT.chatColor .. L["slashHelpChannel"]);
 			return;
 		end
 		SendChatMessage(printPrefix .. " " .. NIT:stripColors(msg), "CHANNEL", nil, id);
@@ -720,40 +720,40 @@ SLASH_NOVALUACMD1 = '/lua';
 function SlashCmdList.NOVALUACMD(msg, editBox, msg2)
 	if (msg and (string.lower(msg) == "on" or string.lower(msg) == "enable")) then
 		if (GetCVar("ScriptErrors") == "1") then
-			print("Lua errors are already enabled.")
+			print(L["luaErrorsAlreadyEnabled"])
 		else
 			SetCVar("ScriptErrors","1")
-			print("Lua errors enabled.")
+			print(L["luaErrorsEnabled"])
 		end
 	elseif (msg and (string.lower(msg) == "off" or string.lower(msg) == "disable")) then
 		if (GetCVar("ScriptErrors") == "0") then
-			print("Lua errors are already off.")
+			print(L["luaErrorsAlreadyDisabled"])
 		else
 			SetCVar("ScriptErrors","0")
-			print("Lua errors disabled.")
+			print(L["luaErrorsDisabled"])
 		end
 	else
-		print("Valid args are \"on\" and \"off\".");
+		print(L["luaErrorsArgs"]);
 	end
 end
 
 SLASH_NOVALUAONCMD1 = '/luaon';
 function SlashCmdList.NOVALUAONCMD(msg, editBox, msg2)
 	if (GetCVar("ScriptErrors") == "1") then
-		print("Lua errors are already enabled.")
+		print(L["luaErrorsAlreadyEnabled"])
 	else
 		SetCVar("ScriptErrors","1")
-		print("Lua errors enabled.")
+		print(L["luaErrorsEnabled"])
 	end
 end
 
 SLASH_NOVALUAOFFCMD1 = '/luaoff';
 function SlashCmdList.NOVALUAOFFCMD(msg, editBox)
 	if (GetCVar("ScriptErrors") == "0") then
-		print("Lua errors are already off.")
+		print(L["luaErrorsAlreadyDisabled"])
 	else
 		SetCVar("ScriptErrors","0")
-		print("Lua errors disabled.")
+		print(L["luaErrorsDisabled"])
 	end
 end
 
@@ -764,7 +764,7 @@ function NIT:debug(...)
 			--DevTools_Dump(...);
     		DisplayTableInspectorWindow(...);
     	else
-			print("NITDebug:", ...);
+			print(L["debugTitle"] .. ":", ...);
 		end
 	end
 end
@@ -782,7 +782,7 @@ function SlashCmdList.NITCMD(msg, editBox)
 			--Simulate entering instance.
 			NIT:enteredInstance();
 		else
-			NIT:print("You are not inside an instance to add.");
+			NIT:print(L["notInsideInstance"]);
 		end
 	elseif (msg == "options" or msg == "option" or msg == "config" or msg == "menu") then
 		NIT:openConfig();
@@ -804,14 +804,14 @@ function SlashCmdList.NITCMD(msg, editBox)
 			or channel == "officer" or channel == "raid" or channel == "group") then
 			NIT:showInstanceStats(nil, channel, allStats);
 		else
-			NIT:print("Please specify a valid channel like /nit stats party or /nit stats raid or /nit stats guild.");
+			NIT:print(L["invalidStatsChannel"]);
 		end
 	elseif (msg ~= nil and msg ~= "") then
 		if (msg == "raid" and not IsInRaid()) then
-			NIT:print("You are not in a raid.");
+			NIT:print(L["notInRaid"]);
 			return;
 	  	elseif (msg == "party" and not IsInGroup()) then
-	  		NIT:print("You are not in a party.");
+			NIT:print(L["notInParty"]);
 	  		return;
 		end
 		local lockoutString, lockoutStringShort, lockoutStringColorized = NIT:getInstanceLockoutInfoString();
@@ -1008,13 +1008,13 @@ function NIT:updateMinimapButton(tooltip, frame)
 			tooltip:AddLine("|cFF9CD6DE" .. timeInside);		
 			if (not data.isPvp) then
 				local mobCount = NIT:getMobCount(data);
-				tooltip:AddLine("|cFF9CD6DE" .. L["mobCount"] .. ":|r |cFFFFFFFF" .. (mobCount or "Unknown"));
+				tooltip:AddLine("|cFF9CD6DE" .. L["mobCount"] .. ":|r |cFFFFFFFF" .. (mobCount or L["Unknown"]));
 			end
 			if (data.honor) then
 				tooltip:AddLine("|cFF9CD6DE" .. L["Honor"] .. ":|r |cFFFFFFFF" .. data.honor);
 			end
 			if (UnitLevel("player") ~= NIT.maxLevel and data.type ~= "arena") then
-				tooltip:AddLine("|cFF9CD6DE" .. L["experience"] .. ":|r |cFFFFFFFF" .. (NIT:commaValue(data.xpFromChat) or "Unknown"));
+				tooltip:AddLine("|cFF9CD6DE" .. L["experience"] .. ":|r |cFFFFFFFF" .. (NIT:commaValue(data.xpFromChat) or L["Unknown"]));
 				if (data.xpFromChat and data.xpFromChat > 0) then
 					local timeSpentRaw = timeInsideRaw;
 					if (timeSpentRaw > 0) then
@@ -1036,7 +1036,7 @@ function NIT:updateMinimapButton(tooltip, frame)
 					tooltip:AddLine("|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. GetCoinTextureString(0));
 				end
 				if (data.groupAverage and data.groupAverage > 0) then
-					tooltip:AddLine("|cFF9CD6DE" .. L["averageGroupLevel"] .. ":|r |cFFFFFFFF" .. (NIT:round(data.groupAverage, 2) or "Unknown"));
+					tooltip:AddLine("|cFF9CD6DE" .. L["averageGroupLevel"] .. ":|r |cFFFFFFFF" .. (NIT:round(data.groupAverage, 2) or L["Unknown"]));
 				end
 			end
 			if (data.rep and next(data.rep)) then
@@ -1402,7 +1402,7 @@ local NITInstanceFrameConfButton = CreateFrame("Button", "NITInstanceFrameConfBu
 NITInstanceFrameConfButton:SetPoint("CENTER", -61, -22);
 NITInstanceFrameConfButton:SetWidth(95);
 NITInstanceFrameConfButton:SetHeight(17);
-NITInstanceFrameConfButton:SetText("Options");
+NITInstanceFrameConfButton:SetText(L["Options"]);
 NITInstanceFrameConfButton:SetNormalFontObject("GameFontNormalSmall");
 NITInstanceFrameConfButton:SetScript("OnClick", function(self, arg)
 	NIT:openConfig();
@@ -1499,7 +1499,7 @@ NITInstanceFrameRestedButton:SetPoint("CENTER", -70, -3);
 NITInstanceFrameRestedButton:SetWidth(115);
 --NITInstanceFrameRestedButton:SetHeight(17);
 NITInstanceFrameRestedButton:SetHeight(25);
-NITInstanceFrameRestedButton:SetText("Your Characters");
+NITInstanceFrameRestedButton:SetText(L["yourChars"]);
 NITInstanceFrameRestedButton:SetNormalFontObject("GameFontNormalSmall");
 NITInstanceFrameRestedButton:SetScript("OnClick", function(self, arg)
 	NIT:openAltsFrame();
@@ -1896,7 +1896,7 @@ function NIT:createInstanceLineFrame(type, data, count)
 		obj.tooltip.fs:SetPoint("CENTER", 0, 0);
 		obj.tooltip.fs:SetFont(NIT.regionFont, 13);
 		obj.tooltip.fs:SetJustifyH("LEFT");
-		obj.tooltip.fs:SetText("|CffDEDE42Frame " .. count);
+		obj.tooltip.fs:SetText("|CffDEDE42" .. L["Frame"] .. " " .. count);
 		obj.tooltip.fsCalc = obj.tooltip:CreateFontString(type .. "NITInstanceLineTooltipFS", "ARTWORK");
 		obj.tooltip.fsCalc:SetFont(NIT.regionFont, 13);
 		obj.tooltip:SetWidth(obj.tooltip.fs:GetStringWidth() + 18);
@@ -2346,10 +2346,10 @@ function NIT:recalcInstanceLineFramesTooltip(obj)
 		text = text .. "\n|cFF9CD6DE" .. L["timeLeft"] .. ":|r " .. timeLeft;
 		text = text .. "\n|cFF9CD6DE" .. L["timeInside"] .. ":|r " .. timeSpent;
 		if (not data.isPvp) then
-			text = text .. "\n|cFF9CD6DE" .. L["mobCount"] .. ":|r " .. (mobCount or "Unknown");
+			text = text .. "\n|cFF9CD6DE" .. L["mobCount"] .. ":|r " .. (mobCount or L["Unknown"]);
 		end
 		if (data.enteredLevel ~= NIT.maxLevel and (not data.isPvp or (data.xpFromChat and data.xpFromChat > 0))) then
-			text = text .. "\n|cFF9CD6DE" .. L["experience"] .. ":|r " .. (NIT:commaValue(data.xpFromChat) or "Unknown");
+			text = text .. "\n|cFF9CD6DE" .. L["experience"] .. ":|r " .. (NIT:commaValue(data.xpFromChat) or L["Unknown"]);
 			if (timeSpentRaw and timeSpentRaw > 0 and tonumber(data.xpFromChat) and data.xpFromChat > 0) then
 				local xpPerHour = NIT:commaValue(NIT:round((tonumber(data.xpFromChat) / timeSpentRaw) * 3600));
 				text = text .. "\n|cFF9CD6DE" .. L["experiencePerHour"] .. ":|r " .. xpPerHour;
@@ -2380,11 +2380,11 @@ function NIT:recalcInstanceLineFramesTooltip(obj)
 			end
 		end
 		if (not data.isPvp and not data.mythicPlus) then
-			text = text .. "\n|cFF9CD6DE" .. L["enteredLevel"] .. ":|r " .. (data.enteredLevel or "Unknown");
-			text = text .. "\n|cFF9CD6DE" .. L["leftLevel"] .. ":|r " .. (data.leftLevel or "Unknown");
+			text = text .. "\n|cFF9CD6DE" .. L["enteredLevel"] .. ":|r " .. (data.enteredLevel or L["Unknown"]);
+			text = text .. "\n|cFF9CD6DE" .. L["leftLevel"] .. ":|r " .. (data.leftLevel or L["Unknown"]);
 		end
 		if (data.type ~= "arena" and data.groupAverage and data.groupAverage > 0 and not data.mythicPlus) then
-			text = text .. "\n|cFF9CD6DE" .. L["averageGroupLevel"] .. ":|r " .. (NIT:round(data.groupAverage, 2) or "Unknown");
+			text = text .. "\n|cFF9CD6DE" .. L["averageGroupLevel"] .. ":|r " .. (NIT:round(data.groupAverage, 2) or L["Unknown"]);
 		end
 		if (data.mythicPlus) then
 			local mythicData = data.mythicPlus;
@@ -2703,7 +2703,7 @@ function NIT:recalcInstanceLineFramesTooltip(obj)
 		end
 		obj.tooltip.fs:SetText(text);
 	else
-		obj.tooltip.fs:SetText("|CffDEDE42Frame " .. obj.count .. "\n" .. L["noDataInstance"] .. ".");
+		obj.tooltip.fs:SetText("|CffDEDE42" .. L["Frame"] .. " " .. obj.count .. "\n" .. L["noDataInstance"] .. ".");
 	end
 	obj.tooltip:SetWidth(obj.tooltip.fs:GetStringWidth() + 18);
 	obj.tooltip:SetHeight(obj.tooltip.fs:GetStringHeight() + 12);
@@ -2713,11 +2713,11 @@ function NIT:getAltLockoutString(char)
 	local hourCount, hourCount24, hourTimestamp, hourTimestamp24 = NIT:getInstanceLockoutInfo(char);
 	local countStringColorized = NIT.prefixColor .. hourCount .. "|r" .. NIT.chatColor.. " " .. L["instancesPastHour"] .. "|r\n"
 			.. NIT.prefixColor .. hourCount24 .. "|r" .. NIT.chatColor .. " " .. L["instancesPastHour24"] .. "|r\n";
-	local lockoutInfo = "now";
+	local lockoutInfo = L["now"];
 	if (GetServerTime() - hourTimestamp24 < 86400 and hourCount24 >= NIT.dailyLimit) then
-		lockoutInfo = "in " .. NIT:getTimeString(86400 - (GetServerTime() - hourTimestamp24), true) .. " (" .. L["active24"] .. ")";
+		lockoutInfo = L["in"] .. " " .. NIT:getTimeString(86400 - (GetServerTime() - hourTimestamp24), true) .. " (" .. L["active24"] .. ")";
 	elseif (GetServerTime() - hourTimestamp < 3600 and hourCount >= NIT.hourlyLimit) then
-		lockoutInfo = "in " .. NIT:getTimeString(3600 - (GetServerTime() - hourTimestamp), true);
+		lockoutInfo = L["in"] .. " " .. NIT:getTimeString(3600 - (GetServerTime() - hourTimestamp), true);
 	end
 	local msg = NIT.prefixColor .. hourCount .. "|r" .. NIT.chatColor.. " " .. L["instancesPastHour"] .. "|r\n"
 			.. NIT.prefixColor .. hourCount24 .. "|r" .. NIT.chatColor .. " " .. L["instancesPastHour24"] .. "|r\n"
@@ -2753,7 +2753,7 @@ end)
 NITInstanceFrameDeleteConfirm.fs = NITInstanceFrameDeleteConfirm:CreateFontString("NITInstanceFrameFS", "ARTWORK");
 NITInstanceFrameDeleteConfirm.fs:SetPoint("TOP", 0, -4);
 NITInstanceFrameDeleteConfirm.fs:SetFont(NIT.regionFont, 14);
-NITInstanceFrameDeleteConfirm.fs:SetText("Instance data missing");
+NITInstanceFrameDeleteConfirm.fs:SetText(L["instanceDataMissing"]);
 
 --Delete button.
 local NITInstanceFrameDCDelete = CreateFrame("Button", "NITInstanceFrameDCDelete", NITInstanceFrameDeleteConfirm, "UIPanelButtonTemplate");
@@ -2832,7 +2832,7 @@ function NIT:openDeleteConfirmFrame(num, displayNum)
 				NITInstanceFrameDeleteConfirm:Hide();
 			end)
 		else
-			NITInstanceFrameDeleteConfirm.fs:SetText("Error: Instance data missing");
+			NITInstanceFrameDeleteConfirm.fs:SetText(string.format(L["errorWithMessage"], L["instanceDataMissing"]));
 			--NITInstanceFrameDCDelete:SetText(L["Error"]);
 			NITInstanceFrameDCDelete:Hide();
 		end
@@ -2943,13 +2943,13 @@ local NITTradeLogFrameResetButton = CreateFrame("Button", "NITTradeLogFrameReset
 NITTradeLogFrameResetButton:SetPoint("CENTER", -100,0);
 NITTradeLogFrameResetButton:SetWidth(90);
 NITTradeLogFrameResetButton:SetHeight(17);
-NITTradeLogFrameResetButton:SetText("Reset Data");
+NITTradeLogFrameResetButton:SetText(L["Reset Data"]);
 NITTradeLogFrameResetButton:SetNormalFontObject("GameFontNormalSmall");
 NITTradeLogFrameResetButton:SetScript("OnClick", function(self, arg)
 	StaticPopupDialogs["NIT_TRADEDATARESET"] = {
-	  text = "Delete all trade data?",
-	  button1 = "Yes",
-	  button2 = "No",
+	  text = L["deleteAllTradeData"],
+	  button1 = L["Yes"],
+	  button2 = L["No"],
 	  OnAccept = function()
 	      NIT:resetTradeData();
 	  end,
@@ -3040,7 +3040,7 @@ end
 
 function NIT:resetTradeData()
 	NIT.data.trades = {};
-	NIT:print("Trade log data has been reset.");
+	NIT:print(L["tradeDataReset"]);
 	NIT:recalcTradeLogFrame();
 end
 
@@ -3091,7 +3091,7 @@ NITTradeCopyDragFrame.fs = NITTradeCopyDragFrame:CreateFontString("NITTradeCopyD
 --NITTradeCopyDragFrame.fs:SetPoint("CENTER", 0, 0);
 NITTradeCopyDragFrame.fs:SetPoint("TOP", 0, -5);
 NITTradeCopyDragFrame.fs:SetFont(NIT.regionFont, 14);
-NITTradeCopyDragFrame.fs:SetText(NIT.prefixColor .. "Trade Copy Frame|r");
+NITTradeCopyDragFrame.fs:SetText(NIT.prefixColor .. L["tradeCopyFrame"] .. "|r");
 --NITTradeCopyDragFrame:SetWidth(NITTradeCopyDragFrame.fs:GetWidth() + 16);
 --NITTradeCopyDragFrame:SetHeight(22);
 NITTradeCopyDragFrame:SetWidth(300);
@@ -3896,7 +3896,7 @@ function NIT:recalcAltsLineFrames()
 							_G[count .. "NITAltsLine"]:SetHeight(_G[count .. "NITAltsLine"].fs:GetHeight());
 							--_G[count .. "NITAltsLine"].removeButton.count = count;
 							_G[count .. "NITAltsLine"].removeButton:Hide();
-							_G[count .. "NITAltsLine"].removeButton.tooltip.fs:SetText("Disabled");
+							_G[count .. "NITAltsLine"].removeButton.tooltip.fs:SetText(L["Disabled"]);
 							_G[count .. "NITAltsLine"].removeButton.tooltip:SetWidth(_G[count .. "NITAltsLine"].removeButton.tooltip.fs:GetStringWidth() + 18);
 							_G[count .. "NITAltsLine"].removeButton.tooltip:SetHeight(_G[count .. "NITAltsLine"].removeButton.tooltip.fs:GetStringHeight() + 12);
 							_G[count .. "NITAltsLine"].data = nil;
@@ -4543,7 +4543,7 @@ end)
 NITCharsFrameDeleteConfirm.fs = NITCharsFrameDeleteConfirm:CreateFontString("NITCharsFrameFS", "ARTWORK");
 NITCharsFrameDeleteConfirm.fs:SetPoint("TOP", 0, -4);
 NITCharsFrameDeleteConfirm.fs:SetFont(NIT.regionFont, 14);
-NITCharsFrameDeleteConfirm.fs:SetText("Character data missing");
+NITCharsFrameDeleteConfirm.fs:SetText(L["characterDataMissing"]);
 
 --Delete button.
 local NITCharsFrameDCDelete = CreateFrame("Button", "NITCharsFrameDCDelete", NITCharsFrameDeleteConfirm, "UIPanelButtonTemplate");
@@ -4593,7 +4593,7 @@ function NIT:openDeleteCharConfirmFrame(realm, char)
 				NITCharsFrameDeleteConfirm:Hide();
 			end)
 		else
-			NITCharsFrameDeleteConfirm.fs:SetText("Error: Character data missing");
+			NITCharsFrameDeleteConfirm.fs:SetText(string.format(L["errorWithMessage"], L["characterDataMissing"]));
 			--NITCharsFrameDCDelete:SetText(L["Error"]);
 			NITCharsFrameDCDelete:Hide();
 		end
@@ -4713,13 +4713,13 @@ f:SetScript('OnEvent', function(self, event, ...)
 						buffNameText = "|cFF0096FF" .. buffName .. roleText .. "|r";
 					end
 					if (GetTime() - lastGammaBuffMsg > 2) then
-						NIT:print(NIT.prefixColor .. "Gamma Dungeon:|r |cFF9CD6DEAuto getting " .. icon .. buffNameText .. " buff for your current spec (can be changed in config).");
+						NIT:print(NIT.prefixColor .. L["gammaDungeon"] .. ":|r |cFF9CD6DE" .. string.format(L["autoGettingGammaBuff"], icon, buffNameText));
 						lastGammaBuffMsg = GetTime();
 					end
 					NIT:selectGossipOption(buffType);
 				else
 					if (GetTime() - lastGammaBuffMsg > 2) then
-						NIT:print(NIT.prefixColor .. "Gamma Dungeon:|r |cFF9CD6DEError selecting correct gamma buff please let the dev know on curseforge.");
+						NIT:print(NIT.prefixColor .. L["gammaDungeon"] .. ":|r |cFF9CD6DE" .. L["gammaBuffSelectionError"]);
 						lastGammaBuffMsg = GetTime();
 					end
 				end
@@ -4956,7 +4956,7 @@ local NITCopyFrameBottomButton = CreateFrame("Button", "NITCopyFrameBottomButton
 NITCopyFrameBottomButton:SetPoint("BOTTOM", 0, -23);
 NITCopyFrameBottomButton:SetWidth(80);
 NITCopyFrameBottomButton:SetHeight(22);
-NITCopyFrameBottomButton:SetText("Close");
+NITCopyFrameBottomButton:SetText(L["Close"]);
 NITCopyFrameBottomButton:SetNormalFontObject("GameFontNormalSmall");
 NITCopyFrameBottomButton:SetScript("OnClick", function(self, arg)
 	NITCopyFrame:Hide();
@@ -5218,7 +5218,7 @@ f:SetScript('OnEvent', function(self, event, ...)
 			local availableQuests = C_GossipInfo.GetAvailableQuests();
 			if (next(availableQuests)) then
 				if (GetTime() - lastAutoDailyQuestMsg > 10) then
-					NIT:print("Auto getting daily quests.");
+					NIT:print(L["autoGettingDailyQuests"]);
 					lastAutoDailyQuestMsg = GetTime();
 				end
 				for index, questData in ipairs(availableQuests) do

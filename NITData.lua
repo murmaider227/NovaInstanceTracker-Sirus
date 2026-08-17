@@ -1116,9 +1116,9 @@ function NIT:scanDungeonSubDifficulty()
 				else
 					npcType = L["Silver Covenant Warden"];
 				end
-				NIT:print("|cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), nil, "[NIT Reminder]");
+				NIT:print("|cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), nil, "[" .. L["reminderTitle"] .. "]");
 				local colorTable = {r = 1, g = 0.96, b = 0.41, id = 41, sticky = 0};
-				RaidNotice_AddMessage(RaidWarningFrame, NIT.prefixColor .. "[NIT Reminder]:|r |cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), colorTable, 6);
+				RaidNotice_AddMessage(RaidWarningFrame, NIT.prefixColor .. "[" .. L["reminderTitle"] .. "]:|r |cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), colorTable, 6);
 			end
 		end
 	end
@@ -1131,9 +1131,9 @@ function test()
 	else
 		npcType = L["Silver Covenant Warden"];
 	end
-	NIT:print("|cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), nil, "[NIT Reminder]");
+	NIT:print("|cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), nil, "[" .. L["reminderTitle"] .. "]");
 	local colorTable = {r = 1, g = 0.96, b = 0.41, id = 41, sticky = 0};
-	RaidNotice_AddMessage(RaidWarningFrame, NIT.prefixColor .. "[NIT Reminder]:|r |cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), colorTable, 6);
+	RaidNotice_AddMessage(RaidWarningFrame, NIT.prefixColor .. "[" .. L["reminderTitle"] .. "]:|r |cFF00FF00" .. string.format(L["autoGammaBuffReminder"], npcType), colorTable, 6);
 end
 
 local isGhost = false;
@@ -1547,12 +1547,12 @@ function NIT:showInstanceStats(id, output, showAll, customPrefix, showDate)
 		end
 	end
 	if (output) then
-		local prefix = "Last Dungeon";
+		local prefix = L["lastDungeon"];
 		if (customPrefix) then
 			prefix = customPrefix;
 		else
 			if (NIT.inInstance and id == 1) then
-				prefix = "Current Dungeon";
+				prefix = L["currentDungeon"];
 			end
 		end
 		if (output == "copypaste") then
@@ -1566,10 +1566,10 @@ function NIT:showInstanceStats(id, output, showAll, customPrefix, showDate)
 		elseif (output == "say" or output == "yell" or output == "party" or output == "guild"
 			or output == "officer" or output == "raid") then
 			if (output == "raid" and not IsInRaid()) then
-				NIT:print("You are not in a raid.");
+				NIT:print(L["notInRaid"]);
 				return;
 		  	elseif (output == "party" and not IsInGroup()) then
-		  		NIT:print("You are not in a party.");
+				NIT:print(L["notInParty"]);
 		  		return;
 			end
 			SendChatMessage("[NIT] " .. NIT:stripColors(prefix.. " " .. text), string.upper(output));
@@ -1881,7 +1881,7 @@ function NIT:deleteCharacter(realm, char)
 			NIT:recalcAltsLineFrames();
 		end
 	else
-		NIT:print("Error deleting " .. char .. ".")
+		NIT:print(string.format(L["errorDeletingCharacter"], char));
 	end
 end
 
@@ -2368,35 +2368,35 @@ end
 
 NIT.bgMarks = {
 	[20558] = {
-		name = "Warsong Gulch Mark of Honor",
+		name = L["Warsong Gulch Mark of Honor"],
 		icon = 134420,
 	};
 	[20559] = {
-		name = "Arathi Basin Mark of Honor",
+		name = L["Arathi Basin Mark of Honor"],
 		icon = 133282,
 	};
 	[20560] = {
-		name = "Alterac Valley Mark of Honor",
+		name = L["Alterac Valley Mark of Honor"],
 		icon = 133308,
 	};
 };
 if (NIT.isTBC) then
 	NIT.bgMarks[29024] = {
-		name = "Eye of the Storm Mark of Honor",
+		name = L["Eye of the Storm Mark of Honor"],
 		icon = 136032,
 	};
 end
 if (NIT.isWrath) then
 	NIT.bgMarks[29024] = {
-		name = "Eye of the Storm Mark of Honor",
+		name = L["Eye of the Storm Mark of Honor"],
 		icon = 136032,
 	};
 	NIT.bgMarks[42425] = {
-		name = "Strand of the Ancients Mark of Honor",
+		name = L["Strand of the Ancients Mark of Honor"],
 		icon = 133276,
 	};
 	NIT.bgMarks[47395] = {
-		name = "Isle of Conquest Mark of Honor",
+		name = L["Isle of Conquest Mark of Honor"],
 		icon = 133314,
 	};
 end
@@ -2621,25 +2621,25 @@ end
 NIT.trackItemsMAGE = {
 	[1] = {
 		id = 17031,
-		name = "Rune of Teleportation",
+		name = L["Rune of Teleportation"],
 		texture = "Interface\\Icons\\inv_misc_rune_06",
 		minLvl = 20;
 	},
 	[2] = {
 		id = 17032,
-		name = "Rune of Portals",
+		name = L["Rune of Portals"],
 		texture = "Interface\\Icons\\inv_misc_rune_08",
 		minLvl = 40;
 	},
 	[3] = {
 		id = 17020,
-		name = "Arcane Powder",
+		name = L["Arcane Powder"],
 		texture = "Interface\\Icons\\inv_misc_dust_01",
 		minLvl = 56;
 	},
 	[4] = {
 		id = 17056,
-		name = "Light Feather",
+		name = L["Light Feather"],
 		texture = "Interface\\Icons\\inv_feather_04",
 		minLvl = 12;
 	},
@@ -2649,13 +2649,13 @@ if (NIT.isTBC or NIT.isPrepatch) then
 	NIT.trackItemsDRUID = {
 		[1] = {
 			id = 22148,
-			name = "Wild Quillvine",
+			name = L["Wild Quillvine"],
 			texture = "Interface\\Icons\\inv_misc_root_01",
 			minLvl = 70;
 		},
 		[2] = {
 			id = 22147,
-			name = "Flintweed Seed",
+			name = L["Flintweed Seed"],
 			texture = "Interface\\Icons\\inv_misc_food_02",
 			minLvl = 70;
 		},
@@ -2663,13 +2663,13 @@ if (NIT.isTBC or NIT.isPrepatch) then
 	NIT.trackItemsPRIEST = {
 		[1] = {
 			id = 17029,
-			name = "Sacred Candle",
+			name = L["Sacred Candle"],
 			texture = "Interface\\Icons\\inv_misc_candle_02",
 			minLvl = 56,
 		},
 		[2] = {
 			id = 17056,
-			name = "Light Feather",
+			name = L["Light Feather"],
 			texture = "Interface\\Icons\\inv_feather_04",
 			minLvl = 24,
 		},
@@ -2678,13 +2678,13 @@ elseif (NIT.isWrath) then
 	NIT.trackItemsDRUID = {
 		[1] = {
 			id = 44605,
-			name = "Wild Spineleaf",
+			name = L["Wild Spineleaf"],
 			texture = "Interface\\Icons\\inv_misc_spineleaf-_01",
 			minLvl = 80;
 		},
 		[2] = {
 			id = 44614,
-			name = "Starleaf Seed",
+			name = L["Starleaf Seed"],
 			texture = "Interface\\Icons\\inv_misc_food_02",
 			minLvl = 80;
 		},
@@ -2692,13 +2692,13 @@ elseif (NIT.isWrath) then
 	NIT.trackItemsPRIEST = {
 		[1] = {
 			id = 44615,
-			name = "Devout Candle",
+			name = L["Devout Candle"],
 			texture = "Interface\\Icons\\inv_misc_candle_01",
 			minLvl = 56,
 		},
 		[2] = {
 			id = 17056,
-			name = "Light Feather",
+			name = L["Light Feather"],
 			texture = "Interface\\Icons\\inv_feather_04",
 			minLvl = 24,
 		},
@@ -2707,13 +2707,13 @@ else
 	NIT.trackItemsDRUID = {
 		[1] = {
 			id = 17026,
-			name = "Wild Thornroot",
+			name = L["Wild Thornroot"],
 			texture = "Interface\\Icons\\inv_misc_root_01",
 			minLvl = 60;
 		},
 		[2] = {
 			id = 17038,
-			name = "Ironwood Seed",
+			name = L["Ironwood Seed"],
 			texture = "Interface\\Icons\\inv_misc_food_02",
 			minLvl = 60;
 		},
@@ -2721,13 +2721,13 @@ else
 	NIT.trackItemsPRIEST = {
 		[1] = {
 			id = 17029,
-			name = "Sacred Candle",
+			name = L["Sacred Candle"],
 			texture = "Interface\\Icons\\inv_misc_candle_02",
 			minLvl = 56,
 		},
 		[2] = {
 			id = 17056,
-			name = "Light Feather",
+			name = L["Light Feather"],
 			texture = "Interface\\Icons\\inv_feather_04",
 			minLvl = 24,
 		},
@@ -2736,7 +2736,7 @@ end
 NIT.trackItemsWARLOCK = {
 	[1] = {
 		id = 6265,
-		name = "Soul Shard",
+		name = L["Soul Shard"],
 		texture = "Interface\\Icons\\inv_misc_gem_amethyst_02",
 		minLvl = 10;
 	},
@@ -2745,19 +2745,19 @@ NIT.trackItemsWARLOCK = {
 NIT.trackItemsSHAMAN = {
 	[1] = {
 		id = 17030,
-		name = "Ankh",
+		name = L["Ankh"],
 		texture = "Interface\\Icons\\inv_jewelry_talisman_06",
 		minLvl = 30;
 	},
 	[2] = {
 		id = 17058,
-		name = "Fish Oil",
+		name = L["Fish Oil"],
 		texture = "Interface\\Icons\\inv_potion_64",
 		minLvl = 28;
 	},
 	[3] = {
 		id = 17057,
-		name = "Shiny Fish Scales",
+		name = L["Shiny Fish Scales"],
 		texture = "Interface\\Icons\\inv_misc_monsterscales_08",
 		minLvl = 22;
 	},
@@ -2766,13 +2766,13 @@ NIT.trackItemsSHAMAN = {
 NIT.trackItemsPALADIN = {
 	[1] = {
 		id = 21177,
-		name = "Symbol of Kings",
+		name = L["Symbol of Kings"],
 		texture = "Interface\\Icons\\inv_misc_symbolofkings_01",
 		minLvl = 52;
 	},
 	[2] = {
 		id = 17033,
-		name = "Symbol of Divinity",
+		name = L["Symbol of Divinity"],
 		texture = "Interface\\Icons\\inv_stone_weightstone_05",
 		minLvl = 30;
 	},
@@ -3128,7 +3128,7 @@ function NIT:fixCooldowns()
 									NIT.db.global[realm].myChars[char].cooldowns[skill] = nil;
 								end
 							end
-							NIT:print("Data error found in tradeskill cooldowns for " .. char .. "-" .. realm .. ", resetting cooldown data.");
+							NIT:print(string.format(L["tradeCooldownDataError"], char, realm));
 							break;
 						end
 					end

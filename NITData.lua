@@ -33,6 +33,14 @@ end
 local L = LibStub("AceLocale-3.0"):GetLocale("NovaInstanceTracker");
 local version = GetAddOnMetadata("NovaInstanceTracker", "Version") or 9999;
 
+local function getNormalizedRealmName()
+	if (type(GetNormalizedRealmName) == "function") then
+		return GetNormalizedRealmName();
+	end
+	--The original 3.3.5 client has no GetNormalizedRealmName().
+	return string.gsub(GetRealmName() or "", "[%s']", "");
+end
+
 local function getVersionParts(value)
 	local parts = {};
 	for part in string.gmatch(tostring(value or ""), "%d+") do
@@ -80,21 +88,21 @@ function NIT:OnCommReceived(commPrefix, string, distribution, sender)
 	--AceComm doesn't supply realm name if it's on the same realm as player.
 	--For now we'll check all 3 name types just to be sure until tested.
 	local me = UnitName("player") .. "-" .. GetRealmName();
-	local meNormalized = UnitName("player") .. "-" .. GetNormalizedRealmName();
+	local meNormalized = UnitName("player") .. "-" .. getNormalizedRealmName();
 	if (sender == UnitName("player") or sender == me or sender == meNormalized) then
 		NIT.hasAddon[meNormalized] = tostring(version);
 		return;
 	end
 	local _, realm = strsplit("-", sender, 2);
 	--If realm found then it's not my realm, but just incase acecomm changes and starts supplying realm also check if realm exists.
-	if (realm and realm ~= GetRealmName() and realm ~= GetNormalizedRealmName()) then
+	if (realm and realm ~= GetRealmName() and realm ~= getNormalizedRealmName()) then
 		--Ignore data from other realms (in bgs).
 		return;
 	end
 	--If no realm in name it must be our realm so add it.
 	if (not string.match(sender, "-")) then
 		--Add normalized realm since roster checks use this.
-		sender = sender .. "-" .. GetNormalizedRealmName();
+		sender = sender .. "-" .. getNormalizedRealmName();
 	end
 	local decoded;
 	if (distribution == "YELL" or distribution == "SAY") then
@@ -346,7 +354,7 @@ f:SetScript('OnEvent', function(self, event, ...)
 			normalizedWho = string.gsub(normalizedWho, "'", "");
 			if (not string.match(normalizedWho, "-")) then
 				--Sometimes it comes through without realm in classic?
-				normalizedWho = normalizedWho .. "-" .. GetNormalizedRealmName();
+				normalizedWho = normalizedWho .. "-" .. getNormalizedRealmName();
 			end
 			if (not NIT.hasAddon[normalizedWho]) then
 				NIT.hasAddon[normalizedWho] = "0";

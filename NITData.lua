@@ -32,6 +32,35 @@ end
 
 local L = LibStub("AceLocale-3.0"):GetLocale("NovaInstanceTracker");
 local version = GetAddOnMetadata("NovaInstanceTracker", "Version") or 9999;
+
+local function getVersionParts(value)
+	local parts = {};
+	for part in string.gmatch(tostring(value or ""), "%d+") do
+		table.insert(parts, tonumber(part));
+	end
+	return parts;
+end
+
+--Returns 1 when left is newer, -1 when right is newer, 0 when equal.
+function NIT:compareVersions(left, right)
+	local leftParts = getVersionParts(left);
+	local rightParts = getVersionParts(right);
+	if (#leftParts == 0 or #rightParts == 0) then
+		return nil;
+	end
+	local count = math.max(#leftParts, #rightParts);
+	for i = 1, count do
+		local leftPart = leftParts[i] or 0;
+		local rightPart = rightParts[i] or 0;
+		if (leftPart > rightPart) then
+			return 1;
+		elseif (leftPart < rightPart) then
+			return -1;
+		end
+	end
+	return 0;
+end
+
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or C_Container.GetContainerNumFreeSlots;
 local GetContainerNumSlots = GetContainerNumSlots or C_Container.GetContainerNumSlots;
 local GetContainerItemCooldown = GetContainerItemCooldown or C_Container.GetContainerItemCooldown;
@@ -58,7 +87,7 @@ function NIT:OnCommReceived(commPrefix, string, distribution, sender)
 	end
 	local _, realm = strsplit("-", sender, 2);
 	--If realm found then it's not my realm, but just incase acecomm changes and starts supplying realm also check if realm exists.
-	if (realm ~= nil or (realm and realm ~= GetRealmName() and realm ~= GetNormalizedRealmName())) then
+	if (realm and realm ~= GetRealmName() and realm ~= GetNormalizedRealmName()) then
 		--Ignore data from other realms (in bgs).
 		return;
 	end
@@ -95,14 +124,24 @@ function NIT:OnCommReceived(commPrefix, string, distribution, sender)
 	--	remoteVersion = "0";
 	--end
 	NIT.hasAddon[sender] = remoteVersion or "0";
-	if (not tonumber(remoteVersion)) then
+	local versionComparison = NIT:compareVersions(remoteVersion, version);
+	if (versionComparison == nil) then
 		--Trying to catch a lua error and find out why.
 		NIT:debug("version missing", sender, cmd, data);
 		return;
 	end
 	--Ignore data syncing for some recently out of date versions.
-	if (tonumber(remoteVersion) < 1.00) then
+	if (NIT:compareVersions(remoteVersion, "1.00") < 0) then
 		return;
+	end
+	if (cmd == "version" and data == "check" and versionComparison < 0) then
+		--Reply directly so an older user logging in after us still discovers the update.
+		NIT.versionReplyTimes = NIT.versionReplyTimes or {};
+		local lastReply = NIT.versionReplyTimes[sender] or 0;
+		if ((GetServerTime() - lastReply) > 30) then
+			NIT.versionReplyTimes[sender] = GetServerTime();
+			NIT:sendComm("WHISPER", "version " .. version .. " reply", sender);
+		end
 	end
 	if (cmd == "instanceReset") then
 		--Instance reset.
@@ -153,16 +192,20 @@ function NIT:sendComm(distribution, string, target)
 end
 
 function NIT:versionCheck(remoteVersion)
-	if (remoteVersion == 0) then
+	if (tostring(remoteVersion) == "0") then
 		--Comm is from NWB.
 		return;
 	end
-	local lastVersionMsg = NIT.db.global.lastVersionMsg;
-	if (tonumber(remoteVersion) > tonumber(version) and (GetServerTime() - lastVersionMsg) > 14400) then
-		print("|cFF9CD6DE" .. L["versionOutOfDate"]);
+	local comparison = NIT:compareVersions(remoteVersion, version);
+	if (not comparison) then
+		return;
+	end
+	local lastVersionMsg = tonumber(NIT.db.global.lastVersionMsg) or 0;
+	if (comparison > 0 and (GetServerTime() - lastVersionMsg) > 14400) then
+		print("|cFF9CD6DE[NIT]|r " .. string.format(L["sirusVersionOutOfDate"], version, remoteVersion));
 		NIT.db.global.lastVersionMsg = GetServerTime();
 	end
-	if (tonumber(remoteVersion) > tonumber(version)) then
+	if (comparison > 0) then
 		NIT.latestRemoteVersion = remoteVersion;
 	end
 end

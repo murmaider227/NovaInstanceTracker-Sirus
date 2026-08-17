@@ -29,6 +29,7 @@ L["dayShort"] = "д"; --Used in short timers like 1d8h (single letter only, usua
 L["startsIn"] = "Начнется через %s"; --"Starts in 1hour".
 L["endsIn"] = "Закончится через %s"; --"Ends in 1hour".
 L["versionOutOfDate"] = "Ваша версия аддона Nova Instance Tracker устарела. Пожалуйста, обновите ее по ссылке https://www.curseforge.com/wow/addons/nova-instance-tracker или через Twitch-клиент";
+L["sirusVersionOutOfDate"] = "Ваша версия Nova Instance Tracker для Sirus устарела (%s -> %s). Обновление: https://github.com/murmaider227/NovaInstanceTracker-Sirus";
 L["Options"] = "Настройки";
 L["Reset Data"] = "Reset Data"; --A button to Reset data.
 

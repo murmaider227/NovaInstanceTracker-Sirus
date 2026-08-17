@@ -568,17 +568,18 @@ function NIT:convertMoney(money, short, separator, colorized, amountColor, comma
 	local copper = math.floor(money % 100);
 	local goldText, silverText, copperText;
 	if (useTextures) then
-		goldText = amountColor .. "%s|TInterface\\MoneyFrame\\UI-GoldIcon:10:10:2:0|t "; 
-		silverText = amountColor .. "%s|TInterface\\MoneyFrame\\UI-SilverIcon:10:10:2:0|t "; 
-		copperText = amountColor .. "%s|TInterface\\MoneyFrame\\UI-CopperIcon:10:10:2:0|t ";
+		--Sirus 3.3.5 needs a positive y offset to align inline coin textures with tooltip text.
+		goldText = amountColor .. "%s|TInterface\\MoneyFrame\\UI-GoldIcon:10:10:2:5|t ";
+		silverText = amountColor .. "%s|TInterface\\MoneyFrame\\UI-SilverIcon:10:10:2:5|t ";
+		copperText = amountColor .. "%s|TInterface\\MoneyFrame\\UI-CopperIcon:10:10:2:5|t ";
 	else
 		goldText = amountColor .. "%s|cffFFDF00" .. L["gold"] .. "|r"; 
 		silverText = amountColor .. "%s|cFFF0F0F0" .. L["silver"] .. "|r"; 
 		copperText = amountColor .. "%s|cFFD69151" .. L["copper"] .. "|r";
 		if (short) then
-			goldText = amountColor .. "%s|cffFFDF00g|r"; 
-			silverText = amountColor .. "%s|cFFF0F0F0s|r"; 
-			copperText = amountColor .. "%s|cFFD69151c|r";
+			goldText = amountColor .. "%s|cffFFDF00" .. L["goldShort"] .. "|r";
+			silverText = amountColor .. "%s|cFFF0F0F0" .. L["silverShort"] .. "|r";
+			copperText = amountColor .. "%s|cFFD69151" .. L["copperShort"] .. "|r";
 		end
 	end
 	if (not colorized) then
@@ -1026,14 +1027,14 @@ function NIT:updateMinimapButton(tooltip, frame)
 			if (not data.isPvp) then
 				if (data.rawMoneyCount and data.rawMoneyCount > 0) then
 					--tooltip:AddLine("|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. GetCoinTextureString(data.rawMoneyCount));
-					tooltip:AddLine("|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. NIT:convertMoney(data.rawMoneyCount, true, "", true, nil, true, true));
+					tooltip:AddLine("|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. NIT:convertMoney(data.rawMoneyCount, true, " ", true, nil, true, false));
 				elseif (data.enteredMoney and data.leftMoney and data.enteredMoney > 0 and data.leftMoney > 0
 						and data.leftMoney > data.enteredMoney) then
 					--Backup for people with addons installed using an altered money string.
 					local moneyCount = data.leftMoney - data.enteredMoney;
-					tooltip:AddLine("\n|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. GetCoinTextureString(moneyCount));
+					tooltip:AddLine("\n|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. NIT:convertMoney(moneyCount, true, " ", true, nil, true, false));
 				else
-					tooltip:AddLine("|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. GetCoinTextureString(0));
+					tooltip:AddLine("|cFF9CD6DE" .. L["rawGoldMobs"] .. ":|r |cFFFFFFFF" .. NIT:convertMoney(0, true, " ", true, nil, true, false));
 				end
 				if (data.groupAverage and data.groupAverage > 0) then
 					tooltip:AddLine("|cFF9CD6DE" .. L["averageGroupLevel"] .. ":|r |cFFFFFFFF" .. (NIT:round(data.groupAverage, 2) or L["Unknown"]));
@@ -1528,14 +1529,14 @@ function NIT:createInstanceFrameShowsAltsButton()
 	if (NIT.instanceFrameShowsAltsButton) then
 		return;
 	end
-	NIT.instanceFrameShowsAltsButton = CreateFrame("CheckButton", "NITInstanceFrameShowsAltsButton", NITInstanceFrame.EditBox, "ChatConfigCheckButtonTemplate");
+	NIT.instanceFrameShowsAltsButton = CreateFrame("CheckButton", "NITInstanceFrameShowsAltsButton", NITInstanceFrame, "ChatConfigCheckButtonTemplate");
 	--NIT.instanceFrameShowsAltsButton:SetPoint("TOPLEFT", 5, -5);
 	NIT.instanceFrameShowsAltsButton:SetPoint("TOPLEFT", 108, 2);
 	--So strange the way to set text is to append Text to the global frame name.
 	NITInstanceFrameShowsAltsButtonText:SetText(L["Show Alts"]);
 	NIT.instanceFrameShowsAltsButton.tooltip = L["showAltsTooltip"];
 	NIT.instanceFrameShowsAltsButton:SetFrameStrata("HIGH");
-	NIT.instanceFrameShowsAltsButton:SetFrameLevel(3);
+	NIT.instanceFrameShowsAltsButton:SetFrameLevel(NITInstanceDragFrame:GetFrameLevel() + 1);
 	NIT.instanceFrameShowsAltsButton:SetWidth(24);
 	NIT.instanceFrameShowsAltsButton:SetHeight(24);
 	NIT.instanceFrameShowsAltsButton:SetChecked(NIT.db.global.showAltsLog);
@@ -1548,19 +1549,20 @@ function NIT:createInstanceFrameShowsAltsButton()
 		NIT.acr:NotifyChange("NovaInstanceTracker");
 	end)
 	--frame:SetHitRectInsets(left, right, top, bottom);
-	NIT.instanceFrameShowsAltsButton:SetHitRectInsets(0, 0, -10, 7);
+	--Extend the hit rectangle over the translated label without stretching the checkbox texture.
+	NIT.instanceFrameShowsAltsButton:SetHitRectInsets(0, -131, 0, 0);
 end
 
 function NIT:createInstanceFramePvpButton()
 	if (NIT.instanceFramePvpButton) then
 		return;
 	end
-	NIT.instanceFramePvpButton = CreateFrame("CheckButton", "NITInstanceFramePvpButton", NITInstanceFrame.EditBox, "ChatConfigCheckButtonTemplate");
+	NIT.instanceFramePvpButton = CreateFrame("CheckButton", "NITInstanceFramePvpButton", NITInstanceFrame, "ChatConfigCheckButtonTemplate");
 	NIT.instanceFramePvpButton:SetPoint("TOPLEFT", 3, 2);
 	NITInstanceFramePvpButtonText:SetText(L["pvp"]);
 	NIT.instanceFramePvpButton.tooltip = L["Show battleground and arena instances?"];
 	NIT.instanceFramePvpButton:SetFrameStrata("HIGH");
-	NIT.instanceFramePvpButton:SetFrameLevel(4);
+	NIT.instanceFramePvpButton:SetFrameLevel(NITInstanceDragFrame:GetFrameLevel() + 1);
 	NIT.instanceFramePvpButton:SetWidth(24);
 	NIT.instanceFramePvpButton:SetHeight(24);
 	NIT.instanceFramePvpButton:SetChecked(NIT.db.global.showPvpLog);
@@ -1572,19 +1574,19 @@ function NIT:createInstanceFramePvpButton()
 		--Refresh the config page.
 		NIT.acr:NotifyChange("NovaInstanceTracker");
 	end)
-	NIT.instanceFramePvpButton:SetHitRectInsets(0, 0, -10, 7);
+	NIT.instanceFramePvpButton:SetHitRectInsets(0, -28, 0, 0);
 end
 
 function NIT:createInstanceFramePveButton()
 	if (NIT.instanceFramePveButton) then
 		return;
 	end
-	NIT.instanceFramePveButton = CreateFrame("CheckButton", "NITInstanceFramePveButton", NITInstanceFrame.EditBox, "ChatConfigCheckButtonTemplate");
+	NIT.instanceFramePveButton = CreateFrame("CheckButton", "NITInstanceFramePveButton", NITInstanceFrame, "ChatConfigCheckButtonTemplate");
 	NIT.instanceFramePveButton:SetPoint("TOPLEFT", 55, 2);
 	NITInstanceFramePveButtonText:SetText(L["PvE"]);
 	NIT.instanceFramePveButton.tooltip = L["Show dungeons and raids?"];
 	NIT.instanceFramePveButton:SetFrameStrata("HIGH");
-	NIT.instanceFramePveButton:SetFrameLevel(4);
+	NIT.instanceFramePveButton:SetFrameLevel(NITInstanceDragFrame:GetFrameLevel() + 1);
 	NIT.instanceFramePveButton:SetWidth(24);
 	NIT.instanceFramePveButton:SetHeight(24);
 	NIT.instanceFramePveButton:SetChecked(NIT.db.global.showPveLog);
@@ -1596,7 +1598,7 @@ function NIT:createInstanceFramePveButton()
 		--Refresh the config page.
 		NIT.acr:NotifyChange("NovaInstanceTracker");
 	end)
-	NIT.instanceFramePveButton:SetHitRectInsets(0, 0, -10, 7);
+	NIT.instanceFramePveButton:SetHitRectInsets(0, -28, 0, 0);
 end
 
 function NIT:createInstanceFrameSelectAltMenu()
@@ -1657,14 +1659,14 @@ function NIT:setInstanceLogFrameHeader()
 		pvp = "/" .. L["pvp"];
 	end
 	if (NIT.db.global.showAltsLog) then
-		header = NIT.prefixColor .. "NovaInstanceTracker v" .. version .. "|r\n"
+		header = NIT.prefixColor .. "NIT v" .. version .. "|r\n"
 				.. "|TInterface\\AddOns\\NovaInstanceTracker\\Media\\00C800Square:10:10:0:0|t " .. L["pastHour"]
 				.. "    |TInterface\\AddOns\\NovaInstanceTracker\\Media\\FFFF00Square:10:10:0:0|t " .. L["pastHour24"]
 				.. "    |TInterface\\AddOns\\NovaInstanceTracker\\Media\\FF0000Square:10:10:0:0|t " .. L["older"] .. "\n"
 				.. "|TInterface\\AddOns\\NovaInstanceTracker\\Media\\RaidSquare:10:10:0:0|t " .. L["raid"] .. pvp
 				.. "    |TInterface\\AddOns\\NovaInstanceTracker\\Media\\AltsSquare:10:10:0:0|t " .. L["alts"];
 	else
-		header = NIT.prefixColor .. "NovaInstanceTracker v" .. version .. "|r\n"
+		header = NIT.prefixColor .. "NIT v" .. version .. "|r\n"
 				.. "|TInterface\\AddOns\\NovaInstanceTracker\\Media\\00C800Square:10:10:0:0|t " .. L["pastHour"]
 				.. "   |TInterface\\AddOns\\NovaInstanceTracker\\Media\\FFFF00Square:10:10:0:0|t " .. L["pastHour24"]
 				.. "   |TInterface\\AddOns\\NovaInstanceTracker\\Media\\FF0000Square:10:10:0:0|t " .. L["older"]
@@ -1707,7 +1709,8 @@ function NIT:openInstanceLogFrame()
 			NIT:createTitleInstanceLineFrame();
 			_G["titleNITInstanceLine"]:Show();
 			_G["titleNITInstanceLine"]:ClearAllPoints();
-			_G["titleNITInstanceLine"]:SetPoint("LEFT", NITInstanceFrame.EditBox, "TOPLEFT", 3, -63);
+			--Keep the summary below the clickable-entry hint in localized clients.
+			_G["titleNITInstanceLine"]:SetPoint("LEFT", NITInstanceFrame.EditBox, "TOPLEFT", 3, -78);
 		end
 		--Fit exactly the last 30 instances in the frames opening scroll area.
 		--NITInstanceFrame:SetHeight(501);
@@ -1979,6 +1982,21 @@ function NIT:createTitleInstanceLineFrame()
 	end
 end
 
+local function fitInstanceLogText(fontString, text, maxWidth, maxSize, minSize)
+	fontString:SetWordWrap(false);
+	if (fontString.SetNonSpaceWrap) then
+		fontString:SetNonSpaceWrap(false);
+	end
+	fontString:SetWidth(maxWidth);
+	local fontSize = maxSize;
+	fontString:SetFont(NIT.regionFont, fontSize);
+	fontString:SetText(text);
+	while (fontString:GetStringWidth() > maxWidth and fontSize > minSize) do
+		fontSize = fontSize - 1;
+		fontString:SetFont(NIT.regionFont, fontSize);
+	end
+end
+
 function NIT:recalcInstanceLineFrames()
 	if (not _G["titleNITInstanceLine"]) then
 		--Frame hasn't been opened since logon, no need to recalc.
@@ -1990,7 +2008,7 @@ function NIT:recalcInstanceLineFrames()
 	end
 	NIT:setInstanceLogFrameHeader();
 	--local offset, count = 75, 0; --60
-	local offset, count = 90, 0; --Start offset, per line offset.
+	local offset, count = 105, 0; --Start offset, per line offset.
 	local hour, hour24, hourTimestamp, hourTimestamp24 = NIT:getInstanceLockoutInfo(nameMatch);
 	local lockoutString, lockoutStringShort = NIT:getInstanceLockoutInfoString(nameMatch);
 	local text = "|cFFFFFF00 " .. L["lastHour"] .. ": |cFFFF6900" .. hour .. " |cFFFFFF00" .. L["lastHour24"] .. ": |cFFFF6900" .. hour24;
@@ -1998,6 +2016,9 @@ function NIT:recalcInstanceLineFrames()
 		text = text	.. " |cFFFFFF00(" .. nameMatch .. ")";
 	end
 	text = text	.. "\n |cFF9CD6DE" .. lockoutStringShort;
+	_G["titleNITInstanceLine"].fs:SetWidth(0);
+	_G["titleNITInstanceLine"].fs:SetWordWrap(true);
+	_G["titleNITInstanceLine"].fs:SetFont(NIT.regionFont, 14);
 	_G["titleNITInstanceLine"].fs:SetText(text);
 	_G["titleNITInstanceLine"]:SetWidth(_G["titleNITInstanceLine"].fs:GetWidth());
 	_G["titleNITInstanceLine"]:SetHeight(_G["titleNITInstanceLine"].fs:GetHeight());
@@ -2027,17 +2048,20 @@ function NIT:recalcInstanceLineFrames()
 					frame:SetPoint("LEFT", NITInstanceFrame.EditBox, "TOPLEFT", 3, -offset);
 					offset = offset + 14;
 					local line = NIT:buildInstanceLineFrameString(v, count);
+					frame.fs:ClearAllPoints();
+					local textInset = 0;
 					if (count < 10) then
 						--Offset the text for single digit numbers so the date comlumn lines up.
 						frame.fs:SetPoint("LEFT", 7, 0);
+						textInset = 7;
 					else
 						frame.fs:SetPoint("LEFT", 0, 0);
 					end
-					frame.fs:SetText(line);
 					--Leave enough room on the right of frame to not overlap the scroll bar (-20) and remove button (-20).
 					--frame:SetWidth(NITInstanceFrame:GetWidth() - 120);
 					frame:SetWidth(NITInstanceFrame:GetWidth() - 86); --Adjusted when lineframes were changed to button for clicking and highlight to fit better.
-					frame:SetHeight(frame.fs:GetHeight());
+					fitInstanceLogText(frame.fs, line, frame:GetWidth() - textInset, 14, 9);
+					frame:SetHeight(14);
 					frame.removeButton.count = count;
 					frame.removeButton:SetScript("OnClick", function(self, arg)
 						--Open delete confirmation box to delete table id (k), but display it as matching log number (count).
@@ -2369,14 +2393,14 @@ function NIT:recalcInstanceLineFramesTooltip(obj)
 				goldStringType = L["rawGoldMobs"];
 			end
 			if (data.rawMoneyCount and data.rawMoneyCount > 0) then
-				text = text .. "\n|cFF9CD6DE" .. goldStringType .. ":|r " .. GetCoinTextureString(data.rawMoneyCount);
+				text = text .. "\n|cFF9CD6DE" .. goldStringType .. ":|r " .. NIT:convertMoney(data.rawMoneyCount, true, " ", true, nil, true, false);
 			elseif (data.enteredMoney and data.leftMoney and data.enteredMoney > 0 and data.leftMoney > 0
 					and data.leftMoney > data.enteredMoney) then
 				--Backup for people with addons installed using an altered money string.
 				local moneyCount = data.leftMoney - data.enteredMoney;
-				text = text .. "\n|cFF9CD6DE" .. goldStringType .. ":|r " .. GetCoinTextureString(moneyCount);
+				text = text .. "\n|cFF9CD6DE" .. goldStringType .. ":|r " .. NIT:convertMoney(moneyCount, true, " ", true, nil, true, false);
 			else
-				text = text .. "\n|cFF9CD6DE" .. goldStringType .. ":|r " .. GetCoinTextureString(0);
+				text = text .. "\n|cFF9CD6DE" .. goldStringType .. ":|r " .. NIT:convertMoney(0, true, " ", true, nil, true, false);
 			end
 		end
 		if (not data.isPvp and not data.mythicPlus) then

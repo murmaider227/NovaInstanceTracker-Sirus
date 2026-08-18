@@ -4,9 +4,9 @@
 ## Author: murmaider227
 ## X-Original-Author: Novaspark-Arugal OCE
 ## X-Website: https://github.com/murmaider227/NovaInstanceTracker-Sirus
-## X-Sirus-Update https://github.com/murmaider227/NovaInstanceTracker-Sirus/tree/main
-## X-Sirus-Category 13
-## Version: 1.55-sirus.6
+## X-Sirus-Update: https://github.com/murmaider227/NovaInstanceTracker-Sirus/tree/main
+## X-Sirus-Category: 13
+## Version: 1.55-sirus.7
 ## SavedVariables: NITdatabase
 
 embeds.xml
